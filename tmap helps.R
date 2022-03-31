@@ -1,35 +1,12 @@
-# script for Figure 2 in lakeCoSTR MS
 
 library(tidyverse)
-library(leaflet)
 library(sf)
 library(tmap)
 library(tmaptools)
-library(raster)
-library(RColorBrewer)
-# library(usmap)
-
-#point to directories
-gis_dir = 'C:/Users/steeleb/Dropbox/travel/gis/project/Sunapee/'
-data_dir = 'data/in-situ locs/'
-nat_gis_dir = 'F:/GIS_data_general/North_America/political_bound/'
-fig_dir = 'figures/'
 
 tmap_mode('plot')
 
-
-#read in sampling csv
-sampling <- read.csv(file.path(data_dir, 'temp_ms_insitu.csv'))
-#make into simple feature; crs is WGS84
-sampling_georef <- st_as_sf(sampling, coords = c('lon_dd', 'lat_dd'), crs = 'EPSG:4326')
-
-# save layers
-sun <- st_read(file.path(gis_dir, 'hydrography/LS_shore_WGS.shp'))
-sun_bathy <- raster(file.path(gis_dir, 'Sunapee Bathymetry/raster_files/derivitives/sun_z_m'))
-northamer = st_read(file.path(nat_gis_dir, 'countries/na_land_w_countries_NAD83.shp'))
-NA_wstates = st_read(file.path(nat_gis_dir, 'states/na_land_w_states_NAD83.shp'))
-
-
+## change bounding box based on another layer----
 #get bounding box of bathy
 bbox_sunapee <- st_bbox(sun_bathy) # current bounding box
 
@@ -43,8 +20,27 @@ bbox_sun_new[3] <- bbox_sun_new[3] + (0.25 * xrange) # xmax - right
 bbox_sun_new[2] <- bbox_sun_new[2] - (0.075 * yrange) # ymin - bottom
 bbox_sun_new[4] <- bbox_sun_new[4] + (0.025 * yrange) # ymax - top
 
+## make legend symbol fill white when color is faceted ---
 
-#make sunapee basemap ----
+tm_shape(cond_summary) +
+  tm_symbols(size = 'mean_cond_uScm',
+             col = 'site_type',
+             shape = 21,
+             title.size = 'average summer\nconductivity\n(uS/cm)',
+             border.col = 'black',
+             scale = 3,
+             shapes.legend.fill = 'white') + ### this will make the fill white (or whatever color)
+  tm_layout(legend.outside = T,
+            legend.title.fontface = 'bold',
+            legend.title.size = 1.5,
+            legend.text.size = 1,
+            title = 'Average Summer\nConductivity\n(Jun-Sept,\n2010-2020)\n ',
+            title.fontface = 'bold')
+
+
+## multiple plots in one frame ----
+
+#make sunapee basemap 
 #play with extent for legends to fit
 sunbase = tm_shape(sun_bathy, bbox = bbox_sun_new) +
   tm_raster(palette = 'Blues',
